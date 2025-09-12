@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Профиль</title>
+</head>
+<body>
+    <h1>Профиль пользователя {{ user.username }}</h1>
+    <p>Возраст: {{ user.age }}</p>
+    <a href="/">Вернуться на главную</a>
+
+    <form action="/logout" method="post">
+        <input type="submit" value="Выйти">
+    </form>
+</body>
+</html>

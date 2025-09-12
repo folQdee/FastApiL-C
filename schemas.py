@@ -10,6 +10,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     age: int
+    role: str
 
     class Config:
         orm_mode = True

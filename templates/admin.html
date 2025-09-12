@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Админ-панель</title>
+</head>
+<body>
+    <h1>Админ-панель</h1>
+
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Имя пользователя</th>
+            <th>Возраст</th>
+            <th>Роль</th>
+            <th>Действия</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.age }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+                <form action="/admin/change_role" method="post">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <select name="new_role">
+                        <option value="user">Заказчик</option>
+                        <option value="sound_engineer">Звукорежиссер</option>
+                        <option value="admin">Админ</option>
+                    </select>
+                    <input type="submit" value="Изменить роль">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <a href="/">Вернуться на главную</a>
+</body>
+</html>
