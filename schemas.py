@@ -14,4 +14,17 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+        
 
+class ProfileCreate(BaseModel):
+    specialization: str
+    experience: str
+    price: str
+    description: str
+
+class ProfileResponse(ProfileCreate):
+    id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True

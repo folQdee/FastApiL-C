@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Редактировать профиль</title>
+</head>
+<body>
+    <h1>Редактировать профиль</h1>
+
+    <form method="post" action="/profile/edit">
+        {% if role == "sound_engineer" %}
+            <h2>Профиль звукорежиссёра</h2>
+
+            <label>Специализация:</label>
+            <input type="text" name="specialization" value="{{ profile.specialization if profile else '' }}"><br>
+
+            <label>Опыт:</label>
+            <input type="text" name="experience" value="{{ profile.experience if profile else '' }}"><br>
+
+            <label>Цена:</label>
+            <input type="number" name="price" value="{{ profile.price if profile else '' }}"><br>
+
+            <label>Описание:</label>
+            <textarea name="description">{{ profile.description if profile else '' }}</textarea><br>
+
+        {% elif role == "customer" %}
+            <h2>Профиль заказчика</h2>
+
+            <label>Имя:</label>
+            <input type="text" name="full_name" value="{{ profile.full_name if profile else '' }}"><br>
+
+            <label>Контакты:</label>
+            <input type="text" name="contact" value="{{ profile.contact if profile else '' }}"><br>
+
+            <label>Описание:</label>
+            <textarea name="description">{{ profile.description if profile else '' }}</textarea><br>
+        {% endif %}
+
+        <input type="submit" value="Сохранить">
+    </form>
+
+    <a href="/">Вернуться на главную</a>
+</body>
+</html>
