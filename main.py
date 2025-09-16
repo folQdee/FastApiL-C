@@ -209,47 +209,127 @@ def edit_profile(request: Request, db: Session = Depends(get_db)):
 @app.post("/profile/edit", response_class=HTMLResponse)
 def save_profile(
     request: Request,
+    db: Session = Depends(get_db),
     specialization: str = Form(None),
     experience: str = Form(None),
     price: str = Form(None),
     description: str = Form(None),
     full_name: str = Form(None),
-    contact: str = Form(None),
-    db: Session = Depends(get_db)
+    contact: str = Form(None)
 ):
     user_id = request.session.get("user_id")
     role = request.session.get("role")
 
     if not user_id:
-        raise HTTPException(status_code=403, detail="Not Authorized")
-    
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     if role == "sound_engineer":
-        profile = db.query(models.SoundEngineer).filter_by(user_id=user_id).first()
-        if not profile:
-            profile = models.SoundEngineer(user_id=user_id)
+        profile = db.query(models.SoundEngineer).filter(models.SoundEngineer.user_id == user_id).first()
+        if profile:
+            profile.specialization = specialization
+            profile.experience = experience
+            profile.price = price
+            profile.description = description
+        else:
+            profile = models.SoundEngineer(
+                user_id=user_id,
+                specialization=specialization,
+                experience=experience,
+                price=price,
+                description=description,
+            )
             db.add(profile)
-
-        profile.specialization = specialization
-        profile.experience = experience
-        profile.price = price
-        profile.description = description
-
 
     elif role == "customer":
-        profile = db.query(models.Customer).filter_by(user_id=user_id).first()
-        if not profile:
-            profile = models.Customer(user_id=user_id)
+        profile = db.query(models.CustomerProfile).filter(models.CustomerProfile.user_id == user_id).first()
+        if profile:
+            profile.full_name = full_name
+            profile.contact = contact
+            profile.description = description
+        else:
+            profile = models.CustomerProfile(
+                user_id=user_id,
+                full_name=full_name,
+                contact=contact,
+                description=description,
+            )
             db.add(profile)
 
-        profile.full_name = full_name
-        profile.contact = contact
-        profile.description = description
-    
     else:
-        raise HTTPException(403, "forbidden")
-    
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     db.commit()
     db.refresh(profile)
-    
+
     return templates.TemplateResponse("profile.html", {"request": request, "user": profile.user})
 
+# СПИСКИ ИНЖЕНЕРОВ
+@app.get("/engineers", response_class=HTMLResponse)
+def list_engineers(request: Request, db: Session = Depends(get_db)):
+    engineers = db.query(models.User).filter(models.User.role == "sound_engineer").all()
+    return templates.TemplateResponse(
+        "engineers/list.html",
+        {"request": request, "engineers": engineers}
+    )
+
+@app.get("/engineers/{engineer_id}", response_class=HTMLResponse)
+def engineer_detail(engineer_id: int, request: Request, db: Session = Depends(get_db)):
+    engineer = db.query(models.User).filter(models.User.id == engineer_id, models.User.role == "sound_engineer").first()
+    if not engineer:
+        raise HTTPException(status_code=404, detail="Звукорежиссёр не найден")
+
+    return templates.TemplateResponse(
+        "engineers/detail.html",
+        {"request": request, "engineer": engineer}
+    )
+
+
+@app.get("/engineers/{engineer_id}")
+def create_order(engineer_id: int, request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    engineer = db.query(models.User).filter(models.User.id == engineer_id, models.User.role == "sound_engineer").first()
+
+    if not user_id:
+        return templates.TemplateResponse("login.html", {"request": request})
+    if not engineer:
+        raise HTTPException(status_code=404, detail="Звукорежиссер не найден")
+    
+    return templates.TemplateResponse("orders/create_order.html", {"request":request, "engineer":engineer})
+    
+
+from fastapi import Form
+
+@app.post("/engineers/{engineer_id}/order", response_class=HTMLResponse)
+def create_order_post(
+    engineer_id: int,
+    request: Request,
+    service_name: str = Form(...),
+    price: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.session.get("user_id")
+
+    # Проверяем, что пользователь авторизован и это customer
+    customer = db.query(models.Customer).filter(models.Customer.user_id == user_id).first()
+    engineer = db.query(models.SoundEngineer).filter(models.SoundEngineer.user_id == engineer_id).first()
+
+    if not user_id or not customer:
+        return templates.TemplateResponse("login.html", {"request": request})
+    if not engineer:
+        raise HTTPException(status_code=404, detail="Звукорежиссер не найден")
+
+    # Создаем заказ
+    new_order = models.Order(
+        engineer_id=engineer.id,
+        customer_id=customer.id,
+        service_name=service_name,
+        price=price,
+    )
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+
+    return templates.TemplateResponse(
+        "orders/order_success.html",
+        {"request": request, "order": new_order, "engineer": engineer}
+    )

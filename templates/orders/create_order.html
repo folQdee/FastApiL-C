@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Order</title>
+</head>
+<body>
+    <h1>Создать новый заказ</h1>
+
+    <form method="post" action="/engineers/{{ engineer.id }}/order">
+        <label>Название услуги:</label>
+        <input type="text" name="service_name" required><br>
+
+        <label>Цена:</label>
+        <input type="number" name="price" required><br>
+
+        <input type="submit" value="Создать заказ">
+    </form>
+
+    <a href="/engineers">Назад к списку</a>
+</body>
+</html>

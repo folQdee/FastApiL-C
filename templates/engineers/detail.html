@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ engineer.username }}</title>
+</head>
+<body>
+    <h1>{{ engineer.username }}</h1>
+    <p>Специализация: {{ engineer.specialization or "не указано" }}</p>
+    <p>Опыт: {{ engineer.experience or "не указан" }}</p>
+    <p>Цена: {{ engineer.price or "не указана" }}</p>
+    <p>Описание: {{ engineer.description or "нет описания" }}</p>
+
+    <a href="/engineers">Назад к списку</a>
+</body>
+</html>

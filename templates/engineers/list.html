@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Звукорежиссёры</title>
+</head>
+<body>
+    <h1>Список звукорежиссёров</h1>
+
+    {% if engineers %}
+        <ul>
+        {% for eng in engineers %}
+            <li>
+                <strong>{{ eng.username }}</strong> <br>
+                Специализация: {{ eng.specialization or "не указано" }} <br>
+                Опыт: {{ eng.experience or "не указан" }} <br>
+                Цена: {{ eng.price or "не указана" }} <br>
+                <a href="/engineers/{{ eng.id }}">Подробнее</a>
+            </li>
+            <hr>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Пока нет звукорежиссёров.</p>
+    {% endif %}
+
+    <a href="/">На главную</a>
+</body>
+</html>
