@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, Request, Form
+from fastapi import FastAPI, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi import HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-import models, schemas
+import models, schemas, auth
 from database import engine, SessionLocal, Base
 from passlib.hash import pbkdf2_sha256
 from fastapi.templating import Jinja2Templates
@@ -14,6 +14,8 @@ app.add_middleware(SessionMiddleware, secret_key="somethinglongenought")
 Base.metadata.create_all(bind=engine)
 
 templates = Jinja2Templates(directory="templates")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 
 
 def get_db():
@@ -22,6 +24,21 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """
+    Функция-зависимость.
+    """
+    decode = auth.decode_access_token(token)
+    if decode is None:
+        raise HTTPException(401, "SMTHWRONG")
+    
+    user = db.query(models.User).filter(models.User.id == decode.get("id")).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 
 #ЗВУКОРЕЖИССЕРЫ
@@ -284,7 +301,7 @@ def engineer_detail(engineer_id: int, request: Request, db: Session = Depends(ge
     )
 
 
-@app.get("/engineers/{engineer_id}")
+@app.get("/engineers/{engineer_id}/order", response_class=HTMLResponse)
 def create_order(engineer_id: int, request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
     engineer = db.query(models.User).filter(models.User.id == engineer_id, models.User.role == "sound_engineer").first()
@@ -296,8 +313,6 @@ def create_order(engineer_id: int, request: Request, db: Session = Depends(get_d
     
     return templates.TemplateResponse("orders/create_order.html", {"request":request, "engineer":engineer})
     
-
-from fastapi import Form
 
 @app.post("/engineers/{engineer_id}/order", response_class=HTMLResponse)
 def create_order_post(
